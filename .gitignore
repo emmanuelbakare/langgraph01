@@ -1,0 +1,81 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environment
+.env
+.env.*
+*.env
+venv/
+.venv/
+env/
+ENV/
+
+# Jupyter Notebooks
+.ipynb_checkpoints
+
+# LangChain / LangGraph specific cache (if any)
+.cache/
+*.langchain/
+*.langgraph/
+scratchpad/
+
+# VSCode settings
+.vscode/
+
+# macOS files
+.DS_Store
+
+# Python virtual environments
+pip-wheel-metadata/
+*.egg-info/
+dist/
+build/
+
+# Pytest / testing
+.pytest_cache/
+
+# Logs
+*.log
+logs/
+
+# Migrations (if using Django/FastAPI with DBs)
+migrations/
+alembic/
+
+# MyPy / Coverage / profiling / pyright
+.mypy_cache/
+coverage.*
+htmlcov/
+.pyright/
+
+# Local data files (e.g., temporary test inputs/outputs)
+data/
+*.sqlite3
+*.db
+*.pkl
+*.jsonl
+
+# Notebook outputs
+*.out
+
+# Models / Checkpoints / API secrets
+*.pt
+*.ckpt
+*.bin
+*.h5
+*.tflite
+secrets.yaml
+*.api.key
+apikey.txt
+
+# Docker
+*.pid
+*.sock
+docker-compose.override.yml
+
+# LangChainHub or local tools
+lc-logs/
+langchain_logs/
+agent_logs/
