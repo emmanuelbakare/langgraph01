@@ -79,3 +79,6 @@ docker-compose.override.yml
 lc-logs/
 langchain_logs/
 agent_logs/
+
+#bach files
+*.bat
