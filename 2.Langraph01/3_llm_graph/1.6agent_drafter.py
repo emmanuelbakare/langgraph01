@@ -40,7 +40,7 @@ def save(filename:str) ->str:
     """
     global document_content
 
-    if not filename.endswith(".txt"):
+    if not filename.endswith(".txt"): 
         filename = f"{filename}.text"
 
     try:
@@ -50,12 +50,12 @@ def save(filename:str) ->str:
         return f"Document have been saved successfully to: '{filename}'"
     
     except Exception as e:
-        return f" error saving document: {str(e)}"
+        return f"Error saving document: {str(e)}"
     
 
 tools = [update, save]
-# model = ChatGoogleGenerativeAI(model="gemini-2.5-flash-preview-05-20").bind_tools(tools)
-model = ChatOpenAI(model="gpt-4o").bind_tools(tools)
+model = ChatGoogleGenerativeAI(model="gemini-2.5-flash-preview-05-20").bind_tools(tools)
+# model = ChatOpenAI(model="gpt-4o").bind_tools(tools)
 
 
 class AgentState(TypedDict):
@@ -65,7 +65,7 @@ def agent_node(state:AgentState)->AgentState:
     system_message= SystemMessage(content=f"""
 You are a Drafter, a helpful writing assistant. You are going to help the user update and modify documents.
 
-- If the user wantt o update and modify content, use the 'update' tool with the complete updated content.
+- If the user want to update and modify content, use the 'update' tool with the complete updated content.
 - If the user wants to save and finish, you need to use the 'save' tool.
 - Make sure to always show the current document state after modifications
 
@@ -99,7 +99,6 @@ def should_continue(state:AgentState)->AgentState:
         return "continue"
     
     #This looks for the most recent tools message...
-
     for message in reversed(messages):
         #... and check if this is a ToolMessage resulting from save
         if (isinstance(message, ToolMessage) and
@@ -121,7 +120,7 @@ def print_message(messages):
  
 graph  =StateGraph(AgentState)
 AGENT = "agent"
-TOOL = "tool"
+TOOL = "tools"
 
 graph.add_node(AGENT,agent_node)
 graph.add_node(TOOL, ToolNode(tools))
@@ -134,7 +133,7 @@ graph.add_conditional_edges(
     should_continue,
     {
         "continue": AGENT,
-        "end": END
+        "end": END,
 
     }
 )
@@ -147,7 +146,7 @@ def run_document_agent():
 
     state = {"messages":[]}
 
-    for step in app.stream(state, stream_mode="custom"):
+    for step in app.stream(state, stream_mode="values"):
         if "messages" in step:
             print_message(step["messages"])
 

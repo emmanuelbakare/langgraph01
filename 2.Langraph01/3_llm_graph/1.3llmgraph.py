@@ -23,6 +23,7 @@ def process_node(state:AgentState) -> AgentState:
     print("\nResult: ",result.content)
     return result
 
+# CREATE GRAPH
 PROCESS= "Process"
 graph = StateGraph(AgentState)
 graph.add_node(PROCESS, process_node)
@@ -35,8 +36,9 @@ user_input=input("Enter: ")
 conversation = []
 while user_input != "exit!":
     conversation.append(HumanMessage(content=user_input))
-    app.invoke({"message":conversation})
-    # print("\nConversation: ", conversation)
+    
+    result = app.invoke({"message":conversation})
+    conversation  = result['messages']
     user_input=input("Enter: ")
 
 # this is the part where the message is stored inside a logging.txt file

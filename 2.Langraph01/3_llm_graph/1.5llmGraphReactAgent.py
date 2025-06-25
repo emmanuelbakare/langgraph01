@@ -40,8 +40,8 @@ def divide(a:int, b:int):
 tools = [add,subtract, multiply, divide]
 
 #invoke llm and bind tools to it.
-model = ChatOpenAI(model="gpt-4o").bind_tools(tools)
-# model = ChatGoogleGenerativeAI(model="gemini-2.5-flash-preview-05-20").bind_tools(tools) # For Gemini
+# model = ChatOpenAI(model="gpt-4o").bind_tools(tools)
+model = ChatGoogleGenerativeAI(model="gemini-2.5-flash-preview-05-20").bind_tools(tools) # For Gemini
 
 
 class AgentState(TypedDict):

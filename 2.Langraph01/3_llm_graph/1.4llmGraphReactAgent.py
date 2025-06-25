@@ -49,12 +49,10 @@ TOOL = "Tools"
 graph= StateGraph(AgentState)
 
 graph.add_node(AGENT, agent_call)
-
-graph.add_edge(START, AGENT)
-
 tool_node = ToolNode(tools=tools)
 graph.add_node(TOOL, tool_node)
 
+graph.add_edge(START, AGENT)
 graph.add_conditional_edges(
     AGENT,
     should_continue,
