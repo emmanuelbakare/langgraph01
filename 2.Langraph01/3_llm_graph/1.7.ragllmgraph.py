@@ -1,6 +1,6 @@
 from typing import TypedDict, Sequence, Annotated
 from dotenv import load_dotenv
-from langchain_core.messages import BaseMessage, SystemMessage, ToolMessage, HumanMessage
+from langchain_core.messages import BaseMessage, SystemMessage, ToolMessage, HumanMessage, AIMessage, FunctionMessage
 from langchain.agents import tool, initialize_agent
 from langgraph.graph.message import add_messages
 from langgraph.graph import StateGraph, START, END
@@ -20,63 +20,6 @@ llm = ChatOpenAI(model="gpt-4o", temperature=0)
 
 
 # get document retriever 
-
-# def get_retriever(file_path):
-     
-#     embeddings = OpenAIEmbeddings(
-#         model = "text-embedding-3-small"
-#     )
-
-#     # get the document path
-#     script_dir = os.path.dirname(__file__)
-#     pdf_path = os.path.join(script_dir,file_path)
-
-
-#     if not os.path.exists(pdf_path):
-#         raise FileNotFoundError(f'PDF file not found in {pdf_path}')
-
-#     pdf_loader = PyPDFLoader(pdf_path) # instantiate loading the pdf
-
-#     try:
-#         pages = pdf_loader.load() #load the pdf
-#         print(f"Document contains {len(pages)} pages")
-#     except Exception as e:
-#         print("Error Loading PDF", e)
-#         raise
-
-#     #configure document chunking
-#     text_splitter = RecursiveCharacterTextSplitter(
-#         chunk_size=1000,
-#         chunk_overlap = 200
-#     )
-
-#     #split the document into chunks using the chunking config
-#     pages_split = text_splitter.split_documents(pages)
-
-#     persistent_directory = script_dir
-#     collection_name = "resume_checker"
-
-#     try:
-#         # create the chroma db of the page (pages_split) using the embedding model 
-#         # storing it in a persistent_directory database path
-#         vectorstore = Chroma.from_documents(
-#             documents= pages_split,
-#             embedding=embeddings,
-#             persist_directory=persistent_directory,
-#             collection_name=collection_name
-#         )
-#     except Exception as e:
-#         print(f" Error Setting Chroma DB {str(e)}")
-#         raise
-
-#     # Create our Retreiver
-#     retriever = vectorstore.as_retriever(
-#         search_type="similarity",
-#         search_kwargs= {"k":5} # k is the amount of chunk to return
-#     )
-#     return retriever
-
-
 def get_retriever(file_path):
     embeddings = OpenAIEmbeddings(model="text-embedding-3-small")
     script_dir = os.path.dirname(__file__)
@@ -137,11 +80,11 @@ def retrieval_tool(query:str)->str:
     """
     This tool searches record from a resume and returns the result
     """
-    print('using retrieval tool')
+    print('retrieving answer')
     docs = retriever.invoke(query)
 
     if not docs:
-      return "I found no releveant information in the Resume"  
+      return "I found no releveant information in the Document"  
     
     results =[]
 
@@ -186,46 +129,6 @@ def call_llm(state: AgentState) -> AgentState:
     return {"messages": [message]}  # LangGraph appends this to state['messages']
 
 
-#retriever Agent
-
-
-# def take_action(state:AgentState)->AgentState:
-#     """ Execute tool calls for the LLM;s response."""
-
-#     tool_calls = state['messages'][-1].tool_calls
-#     results= []
-
-#     for t in tool_calls:
-#         print(f"Calling Tool: {t['name']} with query: {t['args'].get('query','No Query provided')}")
-
-#         if not t['name'] in tools_dict: # checks if a valid tools is present
-#             print(f"\nTool: {t['name']} does noteExist.")
-#             result = "Incorrect Tool Name, Please Retry and Select tools from List of Available tools"
-#         else:
-#             result = tools_dict[t['name']].invoke(t['args'].get('query',''))
-#             print(f"Result length: {len(str(result))}")
-
-
-#         #Append the Tools Message
-#         result.append(ToolMessage(tool_call_id=t['id'], name=t['name'], content=str(result)))
-    
-#     print("Tool Execution Complete. Back to the model!")
-#     return {"messages":results}
-
-
-# def take_action(state: AgentState) -> AgentState:
-#     tool_calls = state['messages'][-1].tool_calls
-#     results = []
-#     for t in tool_calls:
-#         tool_name = t['name']
-#         query = t['args'].get('query', '')
-#         if tool_name not in tools_dict:
-#             content = "Error: tool not found"
-#         else:
-#             content = tools_dict[tool_name].invoke(query)
-#         tm = ToolMessage(tool_call_id=t['id'], name=tool_name, content=str(content))
-#         results.append(tm)
-#     return {"messages": results}
 
 def take_action(state: AgentState) -> AgentState:
     tool_calls = state['messages'][-1].tool_calls

@@ -20,7 +20,8 @@ load_dotenv()
 #this is the global variable to store document
 document_content = ""
 
-
+class AgentState(TypedDict):
+    messages: Annotated[Sequence[BaseMessage], add_messages]
 
 @tool
 def update(content:str)->str:
@@ -58,10 +59,9 @@ model = ChatGoogleGenerativeAI(model="gemini-2.5-flash-preview-05-20").bind_tool
 # model = ChatOpenAI(model="gpt-4o").bind_tools(tools)
 
 
-class AgentState(TypedDict):
-    messages: Annotated[Sequence[BaseMessage], add_messages]
 
-def agent_node(state:AgentState)->AgentState:
+
+def our_agent(state:AgentState)->AgentState:
     system_message= SystemMessage(content=f"""
 You are a Drafter, a helpful writing assistant. You are going to help the user update and modify documents.
 
@@ -72,7 +72,7 @@ You are a Drafter, a helpful writing assistant. You are going to help the user u
 the current document content is: {document_content}
 """)
     
-    if not state['messages']:
+    if not state["messages"]:
         user_input="I'm ready to help you update a document, what would you like to create? "
         user_message = HumanMessage(content=user_input)
     else:
@@ -122,7 +122,7 @@ graph  =StateGraph(AgentState)
 AGENT = "agent"
 TOOL = "tools"
 
-graph.add_node(AGENT,agent_node)
+graph.add_node(AGENT,our_agent)
 graph.add_node(TOOL, ToolNode(tools))
 
 graph.add_edge(START,AGENT)
