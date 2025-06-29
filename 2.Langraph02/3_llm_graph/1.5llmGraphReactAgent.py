@@ -50,8 +50,9 @@ class AgentState(TypedDict):
 
 def agent_call(state:AgentState)->AgentState:
     system_prompt = SystemMessage(content="You are my AI Assistant. Please answer my query to the best of your ability")
-
-    response = model.invoke([system_prompt] + state['messages'])
+    messages= [system_prompt] + state['messages']
+    print(messages)
+    response = model.invoke(messages)
     return {"messages":[response]}
 
 def should_continue(state:AgentState):

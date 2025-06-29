@@ -7,7 +7,7 @@ generation_prompt = ChatPromptTemplate.from_messages(
        (
         "system", "You are a twitter techie influencer assitance tasked with writing excellent twitter post"
          "Generate the best twitter post possible for the user's request."
-        "If the user provides citiques, respond witha revised version of your previous attempts"
+        "If the user provides citiques, respond with a revised version of your previous attempts"
        ),
        MessagesPlaceholder(variable_name="messages")
    ]
