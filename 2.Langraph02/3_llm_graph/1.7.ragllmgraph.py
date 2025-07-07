@@ -1,7 +1,7 @@
 from typing import TypedDict, Sequence, Annotated
 from dotenv import load_dotenv
 from langchain_core.messages import BaseMessage, SystemMessage, ToolMessage, HumanMessage, AIMessage, FunctionMessage
-from langchain.agents import tool, initialize_agent
+from langchain.agents import tool
 from langgraph.graph.message import add_messages
 from langgraph.graph import StateGraph, START, END
 from langgraph.prebuilt import ToolNode
@@ -19,18 +19,24 @@ load_dotenv()
 llm = ChatOpenAI(model="gpt-4o", temperature=0)
 
 
-# get document retriever 
+# get document retriever function 
 def get_retriever(file_path):
+    #get embedding
     embeddings = OpenAIEmbeddings(model="text-embedding-3-small")
-    script_dir = os.path.dirname(__file__)
-    pdf_path = os.path.join(script_dir, file_path)
-    persist_directory = script_dir
-    collection_name = "resume_checker"
-    chroma_db_path = os.path.join(persist_directory, "chroma.sqlite3")
 
-    if not os.path.exists(pdf_path):
+    #get file and folder path
+    script_dir = os.path.dirname(__file__)
+    pdf_path = os.path.join(script_dir, file_path)  #file path
+    persist_directory = script_dir  #folder path
+
+    collection_name = "resume_checker" #collection name
+    chroma_db_path = os.path.join(persist_directory, "chroma.sqlite3") #path to chroma.db
+
+    if not os.path.exists(pdf_path): # if pdf file doesnt exist
         raise FileNotFoundError(f'PDF file not found in {pdf_path}')
 
+    #if chroma.db already exist, just load it
+    #if it does exist create a new one
     if os.path.exists(chroma_db_path):
         print("Loading existing Chroma DB...")
         vectorstore = Chroma(
@@ -40,6 +46,8 @@ def get_retriever(file_path):
         )
     else:
         print("Creating new Chroma DB...")
+
+        #load the pdf
         pdf_loader = PyPDFLoader(pdf_path)
         try:
             pages = pdf_loader.load()
@@ -48,24 +56,30 @@ def get_retriever(file_path):
             print("Error Loading PDF", e)
             raise
 
+        #split the pdf
         text_splitter = RecursiveCharacterTextSplitter(
             chunk_size=1000,
             chunk_overlap=200
         )
-        pages_split = text_splitter.split_documents(pages)
+        pages_split = text_splitter.split_documents(pages) # pass the loaded pages to the splitte config to created splitted docs
 
+        #create the chroma.db (vector database)
         try:
             vectorstore = Chroma.from_documents(
                 documents=pages_split,
                 embedding=embeddings,
-                persist_directory=persist_directory,
-                collection_name=collection_name
+                persist_directory=persist_directory, #optional parameter if not provided, data will be in-memory only
+                collection_name=collection_name  # optional  - use to give name to embeddings in the vector database.
             )
+            # vectorestore could also only have document and bedding parameter
+            # vectorstore = Chroma.from_documents(documents=pages_split, embedding=embeddings) 
+
             print("Chroma DB created and persisted.")
         except Exception as e:
             print(f"Error Setting Chroma DB: {str(e)}")
             raise
 
+    #user the database to gerate a retriever
     retriever = vectorstore.as_retriever(
         search_type="similarity",
         search_kwargs={"k": 5}
@@ -100,6 +114,20 @@ llm = llm.bind_tools(tools)
 class AgentState(TypedDict):
     messages: Annotated[Sequence[BaseMessage], add_messages]
 
+system_prompt="""
+You are intelligent AI assistant who answers questions about resume uploaded in your konwledge base
+Use the retriever tool available to answer questions about the resume. You can make multiple calls if needed.
+If you need to look up some information before asking a follow up question, you are allowed to do that!
+Please always cite the specific parts of the documents you use in your answer
+"""
+
+def call_llm(state: AgentState) -> AgentState:
+    """ Function to call the LLM with the current state."""
+    messages = [SystemMessage(content=system_prompt)] + list(state['messages'])
+    message = llm.invoke(messages)
+    print(state)
+    return {"messages": [message]}  # LangGraph appends this to state['messages']
+
 
 def should_continue(state:AgentState):
     """ Check if the last message contains tool calls"""
@@ -108,25 +136,14 @@ def should_continue(state:AgentState):
     return hasattr(result, 'tool_calls') and len(result.tool_calls) > 0
 
 
-system_prompt="""
-You are intelligent AI assistant who answers questions about resume uploaded in your konwledge base
-Use the retriever tool available to answer questions about the resume. You can make multiple calls if needed.
-If you need to look up some information before asking a follow up question, you are allowed to do that!
-Please always cite the specific parts of the documents you use in your answer
-"""
 
-tools_dict = {our_tool.name: our_tool for our_tool in tools} # creating a dictionary of our tools
+tools_dict = {our_tool.name: our_tool for our_tool in tools} # creating a dictionary from our list of tools
 
 
 #LLM Agent
 
  
 
-def call_llm(state: AgentState) -> AgentState:
-    """ Function to call the LLM with the current state."""
-    messages = [SystemMessage(content=system_prompt)] + list(state['messages'])
-    message = llm.invoke(messages)
-    return {"messages": [message]}  # LangGraph appends this to state['messages']
 
 
 
