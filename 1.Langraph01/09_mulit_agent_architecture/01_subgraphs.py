@@ -1,5 +1,5 @@
 from typing import TypedDict, Annotated
-from langgraph.graph import add_messages, StateGraph, END
+from langgraph.graph import add_messages, StateGraph, START, END
 from langchain_groq import ChatGroq 
 from langchain_core.messages import AIMessage, HumanMessage
 from dotenv import load_dotenv
@@ -28,9 +28,9 @@ def tools_router(state:ChildState):
     last_message = state["messages"][-1]
 
     if (hasattr(last_message, "tool_calls") and len(last_message.tool_calls) > 0) :
-        return "tool_node"
+        return "tools"
     else:
-        return END
+        return "stop"
 
 tool_node = ToolNode(tools=tools)
 
@@ -40,11 +40,36 @@ subgraph.add_node("agent", agent)
 subgraph.add_node("tool_node", tool_node)
 subgraph.set_entry_point("agent")
 
-subgraph.add_conditional_edges("agent", tools_router)
+subgraph.add_conditional_edges("agent", tools_router, { "tools":"tool_node", "stop":END})
 subgraph.add_edge("tool_node", "agent")
 
 search_app = subgraph.compile()
 
-search_app.invoke({
-    "messages":[HumanMessage(content="What is the temperature in Abuja today")]
+# result = search_app.invoke({
+#     "messages":[HumanMessage(content="What is the temperature in Abuja today")]
+# })
+
+# print(result)
+# print("=====ANSWER=======")
+# print(result["messages"][-1].content)
+
+#Parent graph
+class ParentState(TypedDict):
+    messages: Annotated[list, add_messages]
+
+parent_graph = StateGraph(ParentState)
+
+#add the subgraph to a node
+parent_graph.add_node("search_agent", search_app)
+
+#connect the flow
+parent_graph.add_edge(START, "search_agent")
+parent_graph.add_edge("search_agent",END)
+
+parent_app = parent_graph.compile()
+
+
+result = parent_app.invoke({
+   "messages": [HumanMessage(content="what is the weather in Abuja today")]
 })
+print(result["messages"][-1].content)
