@@ -125,7 +125,8 @@ def researcher_node(state:MessagesState)->Command[Literal["validator"]]:
             llm,
             tools=[tavily_search],
             # state_modifier = """ 
-            system_message = """ 
+            # system_message = """ 
+            agent_system_prompt = """
                 You are an information specialist with expertise in comprehensive research.
                  your responsibilities include:\nn\
                  1. Identfiy key information needs based on the query context\n

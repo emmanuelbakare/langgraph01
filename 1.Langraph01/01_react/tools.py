@@ -1,4 +1,5 @@
-from langchain.agents import tool
+# from langchain.agents import tool #old way
+from langchain.tools import tool #Feb 2026 recent tool call
 import datetime
 
 @tool
